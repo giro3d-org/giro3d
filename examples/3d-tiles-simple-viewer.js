@@ -5,23 +5,36 @@
  */
 
 import { Toast } from 'bootstrap';
+import OSM from 'ol/source/OSM.js';
 import { AmbientLight, Color, DirectionalLight, GridHelper, MathUtils, Mesh, Vector3 } from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 
 import CoordinateSystem from '@giro3d/giro3d/core/geographic/CoordinateSystem.js';
 import Instance from '@giro3d/giro3d/core/Instance.js';
+import ColorLayer from '@giro3d/giro3d/core/layer/ColorLayer.js';
+import Globe from '@giro3d/giro3d/entities/Globe.js';
 import Tiles3D from '@giro3d/giro3d/entities/Tiles3D.js';
 import Inspector from '@giro3d/giro3d/gui/Inspector.js';
+import TiledImageSource from '@giro3d/giro3d/sources/TiledImageSource.js';
 
+import { bindButton } from './widgets/bindButton.js';
+import { bindNumberInput } from './widgets/bindNumberInput.js';
+import { bindSlider } from './widgets/bindSlider.js';
 import StatusBar from './widgets/StatusBar.js';
 
-const TILESET_URL_INPUT_ID = 'tileset_url';
+const TILESET_URL_INPUT_ID = 'url';
 const DEFAULT_URL = 'https://3d.oslandia.com/3dtiles/19_rue_Marc_Antoine_Petit_ifc/tileset.json';
 const input = document.getElementById(TILESET_URL_INPUT_ID);
 // @ts-expect-error placeholder does not exist on HtmlElement
 input.placeholder = DEFAULT_URL;
 
 const tmpVec3 = new Vector3();
+
+const params = {
+    globeOpacity: 1,
+    tilesetOpacity: 1,
+    errorTarget: 8,
+};
 
 function replace_window_url(enteredUrl) {
     const url = new URL(document.URL);
@@ -62,7 +75,22 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.25;
 instance.view.setControls(controls);
 
+const globe = new Globe({
+    backgroundColor: '#aad3df',
+});
+
+globe.helperColor = 'black';
+
+instance.add(globe);
+
+const layer = new ColorLayer({
+    source: new TiledImageSource({ source: new OSM() }),
+});
+
+globe.addLayer(layer);
+
 // declare the tileset
+/** @type {Tiles3D} */
 let tileset = null;
 
 // setup the error displaying
@@ -149,7 +177,7 @@ document.getElementById('start').onclick = () => {
 };
 
 // picking and highlighting logic
-const resultsTable = document.getElementById('results-body');
+const resultsTable = document.getElementById('results');
 
 let highlighted;
 let highlightColor = new Color(0xff7171);
@@ -180,17 +208,9 @@ function highlight(evt) {
     }
 
     if (picked.length === 0) {
-        const row = document.createElement('tr');
-        const count = document.createElement('th');
-        count.setAttribute('scope', 'row');
-        count.innerText = '-';
-        const coordinates = document.createElement('td');
-        coordinates.innerText = '-';
-        const distanceToCamera = document.createElement('td');
-        distanceToCamera.innerText = '-';
-        row.append(count, coordinates, distanceToCamera);
-        resultsTable.replaceChildren(row);
+        document.getElementById('pick-result').style.display = 'none';
     } else {
+        document.getElementById('pick-result').style.display = 'block';
         const obj = picked[0].object;
         if (obj instanceof Mesh) {
             const material = obj.material;
@@ -216,7 +236,8 @@ function highlight(evt) {
                 const nameCell = document.createElement('td');
                 nameCell.innerHTML = `<code>${name}</code>`;
                 const valueCell = document.createElement('td');
-                valueCell.innerText = value;
+                valueCell.innerText = value.toString().substring(0, 20);
+                valueCell.title = value;
                 row.append(nameCell, valueCell);
                 rows.push(row);
             }
@@ -230,6 +251,36 @@ function highlight(evt) {
 instance.domElement.addEventListener('mousedown', () => (canPick = true));
 instance.domElement.addEventListener('mousemove', () => (canPick = false));
 instance.domElement.addEventListener('mouseup', highlight);
+
+function updateParams() {
+    globe.opacity = params.globeOpacity;
+    globe.visible = params.globeOpacity > 0;
+    tileset.opacity = params.tilesetOpacity;
+    tileset.visible = params.tilesetOpacity > 0;
+    tileset.errorTarget = params.errorTarget;
+
+    instance.notifyChange(globe);
+}
+
+updateParams();
+
+bindSlider('globe-opacity', v => {
+    params.globeOpacity = v;
+    updateParams();
+});
+bindSlider('tileset-opacity', v => {
+    params.tilesetOpacity = v;
+    updateParams();
+});
+bindButton('center-view', () => {
+    if (tileset) {
+        instance.view.goTo(tileset);
+    }
+});
+bindNumberInput('error-target', v => {
+    params.errorTarget = v;
+    updateParams();
+});
 
 Inspector.attach('inspector', instance);
 StatusBar.bind(instance);

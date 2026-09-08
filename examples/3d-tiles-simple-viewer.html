@@ -1,50 +1,99 @@
 ---
 title: 3D Tiles Simple Viewer
 shortdesc: Display any 3D Tiles from a url.
-tags: ['3d tiles', 'building', 'pointcloud']
+tags: ['3d tiles']
 ---
 
-<div class="toast-container position-fixed top-0 end-0 p-3">
-    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-            <strong class="me-auto">Error loading tileset</strong>
-            <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="toast"
-                aria-label="Close"
-            ></button>
-        </div>
-        <div class="toast-body">Tileset loading failed: <span id="error"></span></div>
-    </div>
-</div>
+<div class="side-pane-with-status-bar pe-none">
+    <div class="card pe-auto">
+        <div class="card-header">Parameters</div>
 
-<div class="side-pane-with-status-bar">
-    <div class="input-group">
-        <input
-            type="text"
-            class="form-control"
-            id="tileset_url"
-            placeholder="http://domain.tld/path/tileset.json"
-        />
-        <button class="btn btn-primary" id="start">Reload</button>
+        <div class="card-body">
+            <!-- Tileset URL -->
+            <div class="input-group">
+                <span class="input-group-text" id="url-label">URL</span>
+                <input
+                    type="url"
+                    class="form-control"
+                    id="url"
+                    placeholder="https://3d.oslandia.com/3dtiles/19_rue_Marc_Antoine_Petit_ifc/tileset.json"
+                    value="https://3d.oslandia.com/3dtiles/19_rue_Marc_Antoine_Petit_ifc/tileset.json"
+                    aria-label="URL"
+                    autocomplete="off"
+                    aria-describedby="url"
+                />
+                <button class="input-group-text btn btn-primary" id="start">Update</button>
+            </div>
+
+            <hr />
+
+            <label for="globe-opacity" id="label-globe-opacity" class="form-label"
+                >Globe opacity</label
+            >
+            <div class="input-group">
+                <input
+                    type="range"
+                    min="0.01"
+                    max="1"
+                    step="0.01"
+                    value="1"
+                    class="form-range"
+                    id="globe-opacity"
+                    autocomplete="off"
+                />
+            </div>
+            <label for="tileset-opacity" id="label-tileset-opacity" class="form-label"
+                >Tileset opacity</label
+            >
+            <div class="input-group">
+                <input
+                    type="range"
+                    min="0.01"
+                    max="1"
+                    step="0.01"
+                    value="1"
+                    class="form-range"
+                    id="tileset-opacity"
+                    autocomplete="off"
+                />
+            </div>
+
+            <!-- Tileset URL -->
+            <div class="input-group mt-3">
+                <span class="input-group-text" id="error-target-label">Error target</span>
+                <input
+                    type="number"
+                    class="form-control"
+                    id="error-target"
+                    value="8"
+                    aria-label="Error target"
+                    autocomplete="off"
+                    aria-describedby="error-target"
+                />
+            </div>
+
+            <!-- Center view -->
+            <button type="button" class="btn btn-primary w-100 mt-3" id="center-view">
+                <i class="bi bi-eye-fill"></i>
+                Center view
+            </button>
+        </div>
     </div>
-    <div class="card">
-        <h5 class="card-header">Element informations</h5>
-        <div class="card-body" style="max-width: 30vw">
-            <!-- Result table -->
-            <table class="table table-sm table-striped">
+    <div class="card pe-auto mt-3" id="pick-result" style="display: none">
+        <div class="card-header">Selected object</div>
+
+        <div class="card-body">
+            <table class="table">
                 <thead>
                     <tr>
                         <th scope="col">Name</th>
                         <th scope="col">Value</th>
                     </tr>
                 </thead>
-                <tbody id="results-body">
+                <tbody id="results">
                     <tr>
-                        <th scope="row" colspan="4">
-                            Click on the scene to inspect object properties
-                        </th>
+                        <td>?</td>
+                        <td>?</td>
                     </tr>
                 </tbody>
             </table>
